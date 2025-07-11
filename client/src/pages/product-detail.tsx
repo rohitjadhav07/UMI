@@ -7,13 +7,20 @@ import { Separator } from "@/components/ui/separator";
 import StreamStatus from "@/components/stream-status";
 import WalletConnection from "@/components/wallet-connection";
 import { useWallet } from "@/hooks/use-wallet";
-import { Star, Clock, Eye, User, ArrowLeft } from "lucide-react";
+import { useContract } from "@/hooks/use-contract";
+import { useToast } from "@/hooks/use-toast";
+import { Star, Clock, Eye, User, ArrowLeft, Play } from "lucide-react";
 import { Link } from "wouter";
+import { formatEther, parseEther } from "@/lib/web3";
 import type { Content } from "@shared/schema";
+import { useState } from "react";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const { wallet } = useWallet();
+  const { startStream, isLoading: contractLoading } = useContract();
+  const { toast } = useToast();
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const { data: content, isLoading } = useQuery<Content>({
     queryKey: ["/api/content", id],
@@ -63,7 +70,52 @@ export default function ProductDetail() {
     return `${hours}h ${mins}m`;
   };
 
-  const totalCost = (parseFloat(content.pricePerMinute) * content.duration).toFixed(2);
+  const pricePerMinuteEth = formatEther(content.pricePerMinute);
+  const totalCostWei = (BigInt(content.pricePerMinute) * BigInt(content.duration)).toString();
+  const totalCostEth = formatEther(totalCostWei);
+
+  const handleStartStream = async () => {
+    if (!wallet.address) {
+      toast({
+        title: "Wallet Not Connected",
+        description: "Please connect your wallet to start streaming",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (wallet.address === content.creator) {
+      toast({
+        title: "Cannot Stream Own Content",
+        description: "You cannot stream your own content",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsStreaming(true);
+      
+      // Calculate minimum payment for 1 minute of streaming
+      const minimumPayment = content.pricePerMinute;
+      
+      await startStream(content.id, minimumPayment);
+      
+      toast({
+        title: "Stream Started",
+        description: "Your streaming session has begun!",
+      });
+    } catch (error: any) {
+      console.error("Failed to start stream:", error);
+      toast({
+        title: "Failed to Start Stream",
+        description: error.message || "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsStreaming(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -149,7 +201,7 @@ export default function ProductDetail() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Price per minute</span>
-                  <span className="font-semibold">${content.pricePerMinute}</span>
+                  <span className="font-semibold">{pricePerMinuteEth} ETH</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Total duration</span>
@@ -157,7 +209,11 @@ export default function ProductDetail() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Cost to complete</span>
-                  <span className="font-semibold">${totalCost}</span>
+                  <span className="font-semibold">{totalCostEth} ETH</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Creator</span>
+                  <span className="font-mono text-sm">{content.creator?.slice(0, 8)}...</span>
                 </div>
               </CardContent>
             </Card>
@@ -176,15 +232,18 @@ export default function ProductDetail() {
               <Button
                 size="lg"
                 className="w-full gradient-primary text-white"
-                disabled={!wallet.isConnected}
+                disabled={!wallet.isConnected || isStreaming || contractLoading}
+                onClick={handleStartStream}
               >
-                {wallet.isConnected ? "Access Content" : "Connect Wallet to Access"}
+                <Play className="h-4 w-4 mr-2" />
+                {isStreaming ? "Starting Stream..." : wallet.isConnected ? "Start Stream" : "Connect Wallet to Stream"}
               </Button>
               
               <Button
                 size="lg"
                 variant="outline"
                 className="w-full"
+                disabled={!wallet.isConnected}
               >
                 Preview Content
               </Button>

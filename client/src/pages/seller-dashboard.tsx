@@ -14,13 +14,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/hooks/use-wallet";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, TrendingUp, Users, Star, Edit, Trash2, DollarSign, Activity } from "lucide-react";
-import { insertContentSchema, type Content } from "@shared/schema";
+import { contentSchema, type Content } from "@shared/schema";
 import { z } from "zod";
 
-const contentFormSchema = insertContentSchema.extend({
-  pricePerMinute: z.string().min(0.01, "Price must be greater than 0"),
+const contentFormSchema = contentSchema.extend({
+  pricePerMinute: z.string().min(1, "Price must be greater than 0"),
   duration: z.number().min(1, "Duration must be at least 1 minute"),
-});
+}).omit({ creator: true });
 
 type ContentFormData = z.infer<typeof contentFormSchema>;
 
@@ -46,19 +46,27 @@ export default function SellerDashboard() {
       title: "",
       description: "",
       category: "course",
-      pricePerMinute: "0.05",
+      pricePerMinute: "10000000000000000", // 0.01 ETH in wei
       duration: 60,
       thumbnailUrl: "",
       contentUrl: "",
-      creatorId: wallet.userId || 0,
       tags: [],
-      isActive: true,
     },
   });
 
   const createContentMutation = useMutation({
     mutationFn: async (data: ContentFormData) => {
-      const response = await apiRequest("POST", "/api/content", data);
+      if (!wallet.address) {
+        throw new Error("Wallet not connected");
+      }
+      
+      const contentData = {
+        ...data,
+        creator: wallet.address,
+        pricePerMinute: data.pricePerMinute, // Already in wei format
+      };
+      
+      const response = await apiRequest("POST", "/api/content", contentData);
       return response.json();
     },
     onSuccess: () => {
@@ -71,10 +79,10 @@ export default function SellerDashboard() {
       setIsDialogOpen(false);
       form.reset();
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to create content. Please try again.",
+        description: error.message || "Failed to create content. Please try again.",
         variant: "destructive",
       });
     },

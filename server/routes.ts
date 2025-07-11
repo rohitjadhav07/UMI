@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertContentSchema, insertStreamSchema, insertUserSchema } from "@shared/schema";
+import { userSchema, contentSchema, streamSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
@@ -20,7 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", async (req, res) => {
     try {
-      const userData = insertUserSchema.parse(req.body);
+      const userData = userSchema.parse(req.body);
       const user = await storage.createUser(userData);
       res.status(201).json(user);
     } catch (error) {
@@ -53,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/content", async (req, res) => {
     try {
-      const contentData = insertContentSchema.parse(req.body);
+      const contentData = contentSchema.parse(req.body);
       const content = await storage.createContent(contentData);
       res.status(201).json(content);
     } catch (error) {
@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/streams", async (req, res) => {
     try {
-      const streamData = insertStreamSchema.parse(req.body);
+      const streamData = streamSchema.parse(req.body);
       const stream = await storage.createStream(streamData);
       res.status(201).json(stream);
     } catch (error) {

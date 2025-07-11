@@ -1,19 +1,14 @@
-import { 
-  users, 
-  content, 
-  streams, 
-  transactions, 
-  walletBalances,
-  type User, 
-  type InsertUser,
-  type Content,
-  type InsertContent,
-  type Stream,
-  type InsertStream,
-  type Transaction,
-  type InsertTransaction,
-  type WalletBalance,
-  type InsertWalletBalance
+import type { 
+  User, 
+  Content, 
+  Stream, 
+  Transaction, 
+  WalletBalance, 
+  InsertUser, 
+  InsertContent, 
+  InsertStream, 
+  InsertTransaction, 
+  InsertWalletBalance 
 } from "@shared/schema";
 
 export interface IStorage {
@@ -81,150 +76,179 @@ export class MemStorage implements IStorage {
   }
 
   private seedData() {
-    // Create sample users
+    // Create demo users
     const user1: User = {
-      id: this.currentUserId++,
-      username: "john_doe",
-      email: "john@example.com",
-      walletAddress: "0x123...abc",
-      role: "seller",
-      createdAt: new Date(),
+      walletAddress: "0x742d35Cc6634C0532925a3b8D9F9DC1f3e2f5847",
+      username: "alice_creator",
+      email: "alice@example.com",
+      isCreator: true,
+      totalEarnings: "1500000000000000000", // 1.5 ETH in wei
+      totalSpent: "0",
+      contentIds: [1, 2],
+      streamIds: []
     };
-    
+
     const user2: User = {
-      id: this.currentUserId++,
-      username: "jane_smith",
-      email: "jane@example.com",
-      walletAddress: "0x456...def",
-      role: "buyer",
-      createdAt: new Date(),
+      walletAddress: "0x8ba1f109551bD432803012645Hac136c9333E4dF7",
+      username: "bob_buyer",
+      email: "bob@example.com",
+      isCreator: false,
+      totalEarnings: "0",
+      totalSpent: "500000000000000000", // 0.5 ETH in wei
+      contentIds: [],
+      streamIds: [1]
     };
-    
-    this.users.set(user1.id, user1);
-    this.users.set(user2.id, user2);
-    
-    // Create sample content
+
+    this.users.set(1, user1);
+    this.users.set(2, user2);
+
+    // Create demo content
     const content1: Content = {
-      id: this.currentContentId++,
+      id: 1,
       title: "Complete JavaScript Mastery",
-      description: "From zero to hero in modern JavaScript development",
+      description: "Master JavaScript from basics to advanced concepts with hands-on projects.",
       category: "course",
-      pricePerMinute: "0.05",
-      duration: 480, // 8 hours
-      thumbnailUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop",
       contentUrl: "https://example.com/js-course",
-      creatorId: user1.id,
+      thumbnailUrl: "https://images.unsplash.com/photo-1627398242454-45a1465c2479?w=400",
+      pricePerMinute: "10000000000000000", // 0.01 ETH in wei
+      duration: 120,
+      creator: user1.walletAddress,
+      isActive: true,
+      totalViews: 45,
+      totalEarnings: "1000000000000000000", // 1 ETH in wei
       tags: ["javascript", "programming", "web development"],
-      isActive: true,
-      rating: "4.9",
-      totalViews: 1247,
-      createdAt: new Date(),
+      rating: "4.8"
     };
-    
+
     const content2: Content = {
-      id: this.currentContentId++,
-      title: "Pixel Adventure Pro",
-      description: "Retro-style platformer with modern mechanics",
-      category: "game",
-      pricePerMinute: "0.02",
-      duration: 600, // 10 hours
-      thumbnailUrl: "https://images.unsplash.com/photo-1552820728-8b83bb6b773f?w=800&h=400&fit=crop",
-      contentUrl: "https://example.com/pixel-game",
-      creatorId: user1.id,
-      tags: ["game", "indie", "platformer"],
+      id: 2,
+      title: "Advanced React Patterns",
+      description: "Learn advanced React patterns and best practices for scalable applications.",
+      category: "course",
+      contentUrl: "https://example.com/react-course",
+      thumbnailUrl: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=400",
+      pricePerMinute: "15000000000000000", // 0.015 ETH in wei
+      duration: 90,
+      creator: user1.walletAddress,
       isActive: true,
-      rating: "4.7",
-      totalViews: 892,
-      createdAt: new Date(),
+      totalViews: 23,
+      totalEarnings: "500000000000000000", // 0.5 ETH in wei
+      tags: ["react", "javascript", "frontend"],
+      rating: "4.9"
     };
-    
+
     const content3: Content = {
-      id: this.currentContentId++,
-      title: "UI Kit Pro Bundle",
-      description: "Premium design system for modern applications",
-      category: "design",
-      pricePerMinute: "0.08",
-      duration: 300, // 5 hours
-      thumbnailUrl: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
-      contentUrl: "https://example.com/ui-kit",
-      creatorId: user1.id,
-      tags: ["design", "ui", "figma"],
+      id: 3,
+      title: "Blockchain Game Development",
+      description: "Build engaging blockchain games with NFT integration and smart contracts.",
+      category: "game",
+      contentUrl: "https://example.com/blockchain-game",
+      thumbnailUrl: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=400",
+      pricePerMinute: "20000000000000000", // 0.02 ETH in wei
+      duration: 180,
+      creator: user1.walletAddress,
       isActive: true,
-      rating: "4.8",
-      totalViews: 654,
-      createdAt: new Date(),
+      totalViews: 12,
+      totalEarnings: "0",
+      tags: ["blockchain", "gaming", "nft"],
+      rating: "4.7"
     };
-    
-    this.content.set(content1.id, content1);
-    this.content.set(content2.id, content2);
-    this.content.set(content3.id, content3);
-    
-    // Create sample wallet balances
+
+    this.content.set(1, content1);
+    this.content.set(2, content2);
+    this.content.set(3, content3);
+
+    // Create wallet balances
     const wallet1: WalletBalance = {
-      id: this.currentWalletId++,
-      userId: user1.id,
-      balance: "2456.75",
-      updatedAt: new Date(),
+      id: 1,
+      userId: 1,
+      balance: "2000000000000000000", // 2 ETH in wei
+      updatedAt: new Date()
     };
-    
+
     const wallet2: WalletBalance = {
-      id: this.currentWalletId++,
-      userId: user2.id,
-      balance: "127.45",
-      updatedAt: new Date(),
+      id: 2,
+      userId: 2,
+      balance: "1000000000000000000", // 1 ETH in wei
+      updatedAt: new Date()
     };
-    
-    this.walletBalances.set(user1.id, wallet1);
-    this.walletBalances.set(user2.id, wallet2);
+
+    this.walletBalances.set(1, wallet1);
+    this.walletBalances.set(2, wallet2);
+
+    // Update counters
+    this.currentUserId = 3;
+    this.currentContentId = 4;
+    this.currentWalletId = 3;
   }
 
+  // User operations
   async getUser(id: number): Promise<User | undefined> {
     return this.users.get(id);
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.username === username);
+    for (const user of this.users.values()) {
+      if (user.username === username) {
+        return user;
+      }
+    }
+    return undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const user: User = {
       ...insertUser,
-      id: this.currentUserId++,
-      createdAt: new Date(),
+      totalEarnings: "0",
+      totalSpent: "0",
+      contentIds: [],
+      streamIds: []
     };
-    this.users.set(user.id, user);
+    
+    this.users.set(this.currentUserId, user);
+    this.currentUserId++;
     return user;
   }
 
+  // Content operations
   async getContent(id: number): Promise<Content | undefined> {
     return this.content.get(id);
   }
 
   async getAllContent(): Promise<Content[]> {
-    return Array.from(this.content.values()).filter(c => c.isActive);
+    return Array.from(this.content.values());
   }
 
   async getContentByCreator(creatorId: number): Promise<Content[]> {
-    return Array.from(this.content.values()).filter(c => c.creatorId === creatorId);
+    const user = this.users.get(creatorId);
+    if (!user) return [];
+    
+    return Array.from(this.content.values()).filter(
+      content => content.creator === user.walletAddress
+    );
   }
 
   async createContent(insertContent: InsertContent): Promise<Content> {
     const newContent: Content = {
+      id: this.currentContentId,
       ...insertContent,
-      id: this.currentContentId++,
-      rating: "0",
+      creator: insertContent.creator || "0x0000000000000000000000000000000000000000",
+      isActive: true,
       totalViews: 0,
-      createdAt: new Date(),
+      totalEarnings: "0",
+      createdAt: new Date()
     };
-    this.content.set(newContent.id, newContent);
+    
+    this.content.set(this.currentContentId, newContent);
+    this.currentContentId++;
     return newContent;
   }
 
   async updateContent(id: number, updates: Partial<InsertContent>): Promise<Content | undefined> {
-    const existing = this.content.get(id);
-    if (!existing) return undefined;
+    const content = this.content.get(id);
+    if (!content) return undefined;
     
-    const updated = { ...existing, ...updates };
+    const updated = { ...content, ...updates };
     this.content.set(id, updated);
     return updated;
   }
@@ -233,35 +257,48 @@ export class MemStorage implements IStorage {
     return this.content.delete(id);
   }
 
+  // Stream operations
   async getStream(id: number): Promise<Stream | undefined> {
     return this.streams.get(id);
   }
 
   async getActiveStreams(userId: number): Promise<Stream[]> {
-    return Array.from(this.streams.values()).filter(s => s.userId === userId && s.isActive);
+    const user = this.users.get(userId);
+    if (!user) return [];
+    
+    return Array.from(this.streams.values()).filter(
+      stream => stream.isActive && (stream.buyer === user.walletAddress || stream.seller === user.walletAddress)
+    );
   }
 
   async getStreamsByContent(contentId: number): Promise<Stream[]> {
-    return Array.from(this.streams.values()).filter(s => s.contentId === contentId);
+    return Array.from(this.streams.values()).filter(
+      stream => stream.contentId === contentId
+    );
   }
 
   async createStream(insertStream: InsertStream): Promise<Stream> {
     const stream: Stream = {
+      id: this.currentStreamId,
       ...insertStream,
-      id: this.currentStreamId++,
+      startTime: new Date(),
       totalMinutes: 0,
       totalCost: "0",
-      createdAt: new Date(),
+      isActive: true,
+      lastPaymentTime: new Date(),
+      createdAt: new Date()
     };
-    this.streams.set(stream.id, stream);
+    
+    this.streams.set(this.currentStreamId, stream);
+    this.currentStreamId++;
     return stream;
   }
 
   async updateStream(id: number, updates: Partial<InsertStream>): Promise<Stream | undefined> {
-    const existing = this.streams.get(id);
-    if (!existing) return undefined;
+    const stream = this.streams.get(id);
+    if (!stream) return undefined;
     
-    const updated = { ...existing, ...updates };
+    const updated = { ...stream, ...updates };
     this.streams.set(id, updated);
     return updated;
   }
@@ -270,35 +307,41 @@ export class MemStorage implements IStorage {
     const stream = this.streams.get(id);
     if (!stream) return undefined;
     
-    const updated = { 
-      ...stream, 
-      endTime: new Date(), 
-      isActive: false 
-    };
-    this.streams.set(id, updated);
-    return updated;
+    stream.isActive = false;
+    stream.endTime = new Date();
+    this.streams.set(id, stream);
+    return stream;
   }
 
+  // Transaction operations
   async createTransaction(insertTransaction: InsertTransaction): Promise<Transaction> {
     const transaction: Transaction = {
+      id: this.currentTransactionId,
       ...insertTransaction,
-      id: this.currentTransactionId++,
-      timestamp: new Date(),
+      timestamp: new Date()
     };
-    this.transactions.set(transaction.id, transaction);
+    
+    this.transactions.set(this.currentTransactionId, transaction);
+    this.currentTransactionId++;
     return transaction;
   }
 
   async getTransactionsByStream(streamId: number): Promise<Transaction[]> {
-    return Array.from(this.transactions.values()).filter(t => t.streamId === streamId);
+    return Array.from(this.transactions.values()).filter(
+      transaction => transaction.streamId === streamId
+    );
   }
 
   async getTransactionsByUser(userId: number): Promise<Transaction[]> {
-    const userStreams = Array.from(this.streams.values()).filter(s => s.userId === userId);
-    const streamIds = userStreams.map(s => s.id);
-    return Array.from(this.transactions.values()).filter(t => streamIds.includes(t.streamId));
+    const user = this.users.get(userId);
+    if (!user) return [];
+    
+    return Array.from(this.transactions.values()).filter(
+      transaction => transaction.from === user.walletAddress || transaction.to === user.walletAddress
+    );
   }
 
+  // Wallet operations
   async getWalletBalance(userId: number): Promise<WalletBalance | undefined> {
     return this.walletBalances.get(userId);
   }
@@ -309,36 +352,49 @@ export class MemStorage implements IStorage {
       id: existing?.id || this.currentWalletId++,
       userId,
       balance,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     };
+    
     this.walletBalances.set(userId, updated);
     return updated;
   }
 
+  // Analytics
   async getSellerStats(sellerId: number): Promise<{
     totalEarnings: string;
     activeStreams: number;
     totalProducts: number;
     averageRating: string;
   }> {
-    const sellerContent = await this.getContentByCreator(sellerId);
-    const activeStreams = Array.from(this.streams.values()).filter(s => 
-      sellerContent.some(c => c.id === s.contentId) && s.isActive
+    const user = this.users.get(sellerId);
+    if (!user) {
+      return {
+        totalEarnings: "0",
+        activeStreams: 0,
+        totalProducts: 0,
+        averageRating: "0"
+      };
+    }
+
+    const userContent = Array.from(this.content.values()).filter(
+      content => content.creator === user.walletAddress
     );
     
-    const totalEarnings = Array.from(this.streams.values())
-      .filter(s => sellerContent.some(c => c.id === s.contentId))
-      .reduce((sum, stream) => sum + parseFloat(stream.totalCost || "0"), 0);
-    
-    const averageRating = sellerContent.length > 0 
-      ? (sellerContent.reduce((sum, c) => sum + parseFloat(c.rating || "0"), 0) / sellerContent.length).toFixed(1)
-      : "0";
-    
+    const activeStreams = Array.from(this.streams.values()).filter(
+      stream => stream.isActive && stream.seller === user.walletAddress
+    ).length;
+
+    const totalRating = userContent.reduce((sum, content) => {
+      return sum + (parseFloat(content.rating || "0"));
+    }, 0);
+
+    const averageRating = userContent.length > 0 ? (totalRating / userContent.length).toFixed(1) : "0";
+
     return {
-      totalEarnings: totalEarnings.toFixed(2),
-      activeStreams: activeStreams.length,
-      totalProducts: sellerContent.length,
-      averageRating,
+      totalEarnings: user.totalEarnings,
+      activeStreams,
+      totalProducts: userContent.length,
+      averageRating
     };
   }
 
@@ -348,17 +404,20 @@ export class MemStorage implements IStorage {
     totalRevenue: string;
     totalCreators: number;
   }> {
-    const allContent = await this.getAllContent();
-    const activeStreams = Array.from(this.streams.values()).filter(s => s.isActive);
-    const totalRevenue = Array.from(this.streams.values())
-      .reduce((sum, stream) => sum + parseFloat(stream.totalCost || "0"), 0);
-    const creators = new Set(allContent.map(c => c.creatorId));
+    const totalContent = this.content.size;
+    const activeStreams = Array.from(this.streams.values()).filter(stream => stream.isActive).length;
     
+    const totalRevenue = Array.from(this.content.values()).reduce((sum, content) => {
+      return sum + parseFloat(content.totalEarnings);
+    }, 0);
+
+    const totalCreators = Array.from(this.users.values()).filter(user => user.isCreator).length;
+
     return {
-      totalContent: allContent.length,
-      activeStreams: activeStreams.length,
-      totalRevenue: totalRevenue.toFixed(0),
-      totalCreators: creators.size,
+      totalContent,
+      activeStreams,
+      totalRevenue: totalRevenue.toString(),
+      totalCreators
     };
   }
 }

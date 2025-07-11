@@ -1,107 +1,140 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Users table
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email").notNull().unique(),
-  walletAddress: text("wallet_address"),
-  role: text("role").notNull().default("buyer"), // buyer, seller, admin
-  createdAt: timestamp("created_at").defaultNow(),
+// Blockchain-based types for StreamMall
+export interface User {
+  walletAddress: string;
+  username: string;
+  email: string;
+  isCreator: boolean;
+  totalEarnings: string;
+  totalSpent: string;
+  contentIds: number[];
+  streamIds: number[];
+}
+
+export interface Content {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  contentUrl: string;
+  thumbnailUrl: string;
+  pricePerMinute: string; // in wei
+  duration: number; // in minutes
+  creator: string; // wallet address
+  isActive: boolean;
+  totalViews: number;
+  totalEarnings: string;
+  tags: string[];
+  rating?: string;
+  createdAt?: Date;
+  creatorId?: number; // for backward compatibility
+}
+
+export interface Stream {
+  id: number;
+  contentId: number;
+  buyer: string; // wallet address
+  seller: string; // wallet address
+  startTime: Date;
+  endTime?: Date;
+  totalMinutes: number;
+  totalCost: string; // in wei
+  isActive: boolean;
+  lastPaymentTime: Date;
+  userId?: number; // for backward compatibility
+  createdAt?: Date;
+}
+
+export interface Transaction {
+  id: number;
+  streamId: number;
+  amount: string; // in wei
+  timestamp: Date;
+  type: string; // stream_payment, stream_start, stream_end
+  txHash: string;
+  from: string;
+  to: string;
+}
+
+export interface WalletBalance {
+  id: number;
+  userId: number;
+  balance: string;
+  updatedAt: Date;
+}
+
+// Zod schemas for validation
+export const userSchema = z.object({
+  walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid wallet address"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  email: z.string().email("Invalid email format"),
+  isCreator: z.boolean(),
 });
 
-// Content table
-export const content = pgTable("content", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  category: text("category").notNull(), // course, game, document, design
-  pricePerMinute: decimal("price_per_minute", { precision: 10, scale: 4 }).notNull(),
-  duration: integer("duration").notNull(), // in minutes
-  thumbnailUrl: text("thumbnail_url"),
-  contentUrl: text("content_url").notNull(),
-  creatorId: integer("creator_id").references(() => users.id).notNull(),
-  tags: json("tags").$type<string[]>().default([]),
-  isActive: boolean("is_active").default(true),
-  rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
-  totalViews: integer("total_views").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+export const contentSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
+  category: z.enum(["course", "game", "document", "design"]),
+  contentUrl: z.string().url("Invalid content URL"),
+  thumbnailUrl: z.string().url("Invalid thumbnail URL").optional(),
+  pricePerMinute: z.string().regex(/^\d+$/, "Price must be a valid number in wei"),
+  duration: z.number().min(1, "Duration must be at least 1 minute"),
+  tags: z.array(z.string()).default([]),
 });
 
-// Streams table (active subscriptions)
-export const streams = pgTable("streams", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  contentId: integer("content_id").references(() => content.id).notNull(),
-  startTime: timestamp("start_time").defaultNow(),
-  endTime: timestamp("end_time"),
-  totalMinutes: integer("total_minutes").default(0),
-  totalCost: decimal("total_cost", { precision: 10, scale: 4 }).default("0"),
-  isActive: boolean("is_active").default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+export const streamSchema = z.object({
+  contentId: z.number().min(1, "Content ID is required"),
+  buyer: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid buyer address"),
+  seller: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid seller address"),
 });
 
-// Transactions table
-export const transactions = pgTable("transactions", {
-  id: serial("id").primaryKey(),
-  streamId: integer("stream_id").references(() => streams.id).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 4 }).notNull(),
-  timestamp: timestamp("timestamp").defaultNow(),
-  type: text("type").notNull(), // stream_payment, stream_start, stream_end
-});
+// Contract ABI types
+export interface ContractConfig {
+  address: string;
+  abi: any[];
+}
 
-// Wallet balances table
-export const walletBalances = pgTable("wallet_balances", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  balance: decimal("balance", { precision: 10, scale: 4 }).default("0"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
+// Blockchain transaction types
+export interface TransactionReceipt {
+  transactionHash: string;
+  blockNumber: number;
+  gasUsed: string;
+  status: boolean;
+}
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
+// Legacy types for backward compatibility
+export type InsertUser = z.infer<typeof userSchema>;
+export type InsertContent = z.infer<typeof contentSchema>;
+export type InsertStream = z.infer<typeof streamSchema>;
+export type InsertTransaction = Omit<Transaction, 'id' | 'timestamp'>;
+export type InsertWalletBalance = Omit<WalletBalance, 'id' | 'updatedAt'>;
 
-export const insertContentSchema = createInsertSchema(content).omit({
-  id: true,
-  createdAt: true,
-  totalViews: true,
-  rating: true,
-});
+// Smart contract event types
+export interface ContentCreatedEvent {
+  contentId: number;
+  creator: string;
+  title: string;
+  pricePerMinute: string;
+}
 
-export const insertStreamSchema = createInsertSchema(streams).omit({
-  id: true,
-  createdAt: true,
-  totalMinutes: true,
-  totalCost: true,
-});
+export interface StreamStartedEvent {
+  streamId: number;
+  contentId: number;
+  buyer: string;
+  seller: string;
+}
 
-export const insertTransactionSchema = createInsertSchema(transactions).omit({
-  id: true,
-  timestamp: true,
-});
+export interface StreamEndedEvent {
+  streamId: number;
+  totalCost: string;
+  totalMinutes: number;
+}
 
-export const insertWalletBalanceSchema = createInsertSchema(walletBalances).omit({
-  id: true,
-  updatedAt: true,
-});
-
-// Types
-export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-
-export type Content = typeof content.$inferSelect;
-export type InsertContent = z.infer<typeof insertContentSchema>;
-
-export type Stream = typeof streams.$inferSelect;
-export type InsertStream = z.infer<typeof insertStreamSchema>;
-
-export type Transaction = typeof transactions.$inferSelect;
-export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
-
-export type WalletBalance = typeof walletBalances.$inferSelect;
-export type InsertWalletBalance = z.infer<typeof insertWalletBalanceSchema>;
+// Web3 configuration
+export interface Web3Config {
+  contractAddress: string;
+  chainId: number;
+  rpcUrl: string;
+  explorerUrl: string;
+}

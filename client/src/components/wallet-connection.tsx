@@ -4,7 +4,7 @@ import { Wallet, AlertCircle } from "lucide-react";
 import { useWallet } from "@/hooks/use-wallet";
 
 export default function WalletConnection() {
-  const { wallet, isConnecting, connectWallet } = useWallet();
+  const { wallet, isConnecting, connectWallet, error } = useWallet();
 
   if (wallet.isConnected) {
     return (
@@ -28,7 +28,7 @@ export default function WalletConnection() {
             </div>
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Balance:</span>
-              <span className="text-sm font-semibold">${wallet.balance}</span>
+              <span className="text-sm font-semibold">{wallet.balance} ETH</span>
             </div>
           </div>
         </CardContent>
@@ -48,6 +48,11 @@ export default function WalletConnection() {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+            {error}
+          </div>
+        )}
         <Button
           onClick={connectWallet}
           disabled={isConnecting}
